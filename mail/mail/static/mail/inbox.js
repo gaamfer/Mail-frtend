@@ -31,13 +31,18 @@ function load_mailbox(mailbox) {
 
   // Show the mailbox name
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
+
+  // fetch the emails from the mailbox  
+ /* fetch(`/emails/${mailbox}`, {
+    method: 'GET',
+
+  })*/
 }
 
 function send_email(event) {
   // prevent the default behavior of the form
   event.preventDefault();
 
-  console.log('Im here');
   // Create the variables
   const recipients = document.querySelector('#compose-recipients').value;
   const subject  = document.querySelector('#compose-subject').value;
@@ -54,7 +59,15 @@ function send_email(event) {
   })
   .then(response => response.json())
   .then(result => {
-    // Print result in console 
+    if (result.error) {
+      // Make an alert with the error
+      alert(result.error);
+      console.log(result);
+      return;
+    }
+    // Make an alert with the response
+    alert(result.message);
     console.log(result);
+    load_mailbox('sent');
   });
 }
