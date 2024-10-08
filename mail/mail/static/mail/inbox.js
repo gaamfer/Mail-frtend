@@ -33,10 +33,18 @@ function load_mailbox(mailbox) {
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
 
   // fetch the emails from the mailbox  
- /* fetch(`/emails/${mailbox}`, {
-    method: 'GET',
-
-  })*/
+  fetch(`/emails/${mailbox}`)
+  .then(response => response.json())
+  .then(emails => {
+    // Print emails
+    for (let email of emails) {
+      const email_div = document.createElement('div');
+      email_div.className = `email_${email.id}`;
+      email_div.id = 'eachmail';
+      email_div.innerHTML = `<h4 id='mailsender'> ${email.sender}</h4> <p id='subject'> ${email.subject} </p> <p id='timestamp'> ${email.timestamp} </p>`;
+      document.querySelector('#emails-view').append(email_div);
+    }
+  });
 }
 
 function send_email(event) {
