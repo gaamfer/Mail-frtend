@@ -4,11 +4,7 @@ textarea {
 #emails-view {
     margin-top: 10px;
 }
-#eachmail {
-    margin-top: auto;
-    background-color: rgb(252, 252, 252);
-    box-shadow: 10px 4px 8px rgba(0, 0, 0, 0.1);
-}
+
 
 #mailsender {
     font-size: 1.5em;
@@ -24,4 +20,20 @@ textarea {
     text-align: end;
     padding: 2px;
     color: grey;
+}
+
+.clickable {
+    cursor: pointer;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    border-radius: 2px;
+    transition: background-color 0.3s;
+    margin-bottom: 4px;
+    
+}
+
+.clickable:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    background-color: #000000;
+    color: #ffffff;
 }
