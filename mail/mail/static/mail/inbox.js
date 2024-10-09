@@ -43,12 +43,12 @@ function load_mailbox(mailbox) {
       
       // For the 'archive' mailbox, only show the archived emails
       if (mailbox === 'archive' && email.archived) {
-        add_email(email);
+        add_email(email, mailbox);
       }
 
       // For other types of mailboxes, show all non archived emails
       else if (mailbox !== 'archive' && !email.archived) {
-        add_email(email);
+        add_email(email, mailbox);
       }
 
     });
@@ -56,12 +56,11 @@ function load_mailbox(mailbox) {
 }
 
 // Function to add email to the DOM
-function add_email(email){
-
+function add_email(email, mailbox) {
   // Create the div for the email
   const email_div = document.createElement('div');
   
-  email_div.className = `email_${email.id} clickable`;
+  email_div.className = 'mail clickable';
   email_div.id = 'eachmail';
   email_div.setAttribute('role', 'button');
   email_div.innerHTML = `
@@ -69,16 +68,19 @@ function add_email(email){
     <p id='subject'> ${email.subject} </p>
     <p id='timestamp'> ${email.timestamp} </p>`;
   
-  if (email.read) {
-  email_div.style.backgroundColor = 'gray';
+  if (email.read || mailbox === 'sent') {
+    email_div.style.backgroundColor = 'gray';
   }
 
-  // Add archive/unarchive button based on email's archived status
-  if (email.archived) {
-    email_div.innerHTML += `<button class="unarchive" data-id="${email.id}">Unarchive</button>`;
-  } else {
-    email_div.innerHTML += `<button class="archive" data-id="${email.id}">Archive</button>`;
+  if (mailbox !== 'sent') {
+    // Add archive/unarchive button based on email's archived status
+    if (email.archived) {
+      email_div.innerHTML += `<button class="unarchive" data-id="${email.id}">Unarchive</button>`;
+    } else if (!email.archived) {
+      email_div.innerHTML += `<button class="archive" data-id="${email.id}">Archive</button>`;
+    }
   }
+  email_div.innerHTML += `<button class="reply" data-id="${email.id}">Reply</button>`;
 
   // Append email to the DOM
   document.querySelector('#emails-view').append(email_div);
@@ -93,17 +95,53 @@ function add_email(email){
     button.addEventListener('click', function(event) {
       event.stopPropagation();  // Prevent click event from triggering the email view
 
-      // Handle archiving/unarchiving
-      if (button.classList.contains('archive')) {
-        add_to_archives(email.id);  // Archive the email
-      } else if (button.classList.contains('unarchive')) {
-        remove_from_archives(email.id);  // Unarchive the email
+      // Find what was clicked on 
+      const element = event.target;
+
+      if (element.className === 'archive') {
+        add_to_archives(email.id);
+        // Trigger the animation
+        element.parentElement.style.animationPlayState = 'running';
+        element.parentElement.addEventListener('animationend', () => {
+          element.parentElement.remove();
+        });
       }
+      else if (element.className === 'unarchive') {
+        remove_from_archives(email.id);
+        // Trigger the animation
+        element.parentElement.style.animationPlayState = 'running';
+        element.parentElement.addEventListener('animationend', () => {
+          element.parentElement.remove();
+        });
+      }
+      else if (element.className === 'reply') {
+        Reply(email);
+      }
+
     });
   });
-
 }
 
+// Function to reply to an email
+function Reply(email) {
+  // Show compose view and hide other views
+  document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#compose-view').style.display = 'block';
+
+  // Clear out composition fields
+  document.querySelector('#compose-recipients').value = email.sender;
+  document.querySelector('#compose-subject').value = email.subject.startsWith('Re:') ? email.subject : `Re: ${email.subject}`;
+  document.querySelector('#compose-body').value = `\n
+  \n
+  ---------------------\n
+  On ${email.timestamp}, From:${email.sender} wrote:\n${email.body}\n
+  \n`;
+
+  // Move the cursor to the start of the compose body
+  const composeBody = document.querySelector('#compose-body');
+  composeBody.focus();
+  composeBody.setSelectionRange(0, 0);
+}
 
 // Function to archive the email
 function add_to_archives(email_id) {
@@ -113,7 +151,6 @@ function add_to_archives(email_id) {
       archived: true
     })
   })
-  .then(() => load_mailbox('inbox'));
 }
 
 // Function to remove from the archives
@@ -124,12 +161,13 @@ function remove_from_archives(email_id) {
       archived: false
     })
   })
-  .then(() => load_mailbox('archive'));
 }
+
+
 
 // Function to open the email
 function read_email(email) {
-   // Set read status to true for the email
+  // Set read status to true for the email
   fetch(`/emails/${email.id}`, {
     method: 'PUT',
     body: JSON.stringify({
@@ -140,7 +178,7 @@ function read_email(email) {
   // Hide the emails-view
   document.querySelector('#emails-view').style.display = 'none';
 
-  // fetch the email.id url
+  // Fetch the email details
   fetch(`/emails/${email.id}`)
   .then(response => response.json())
   .then(email_body => {
@@ -154,15 +192,79 @@ function read_email(email) {
     // Create a div for the email body
     const eb_div = document.createElement('div');
     eb_div.id = 'email_body';
-    eb_div.innerHTML  = `<h4 id='mailsender'> ${email.sender}</h4> <p id='mail_recipients'> ${email.recipients}</p> <p id='subject'> ${email.subject} </p> <p id='body'>${email.body}</p> <p id='timestamp'> ${email.timestamp} </p>`;
+
+    // Add the reply and unread buttons on top
+    eb_div.innerHTML = `
+      <button class="reply" data-id="${email.id}">Reply</button>
+      <button class="unread" data-id="${email.id}">Unread</button>`;
+    
+    // Add archive/unarchive button based on the email's archived status
+    if (email_body.archived) {
+      eb_div.innerHTML += `<button class="unarchive" data-id="${email.id}">Unarchive</button>`;
+    } else {
+      eb_div.innerHTML += `<button class="archive" data-id="${email.id}">Archive</button>`;
+    }
+    
+    eb_div.innerHTML += `<hr>`;
+
+    // Add the email data to the div
+    eb_div.innerHTML  += `
+      <h4 id='mailsender'> ${email_body.sender}</h4> 
+      <p id='mail_recipients'> ${email_body.recipients}</p> 
+      <p id='subject'> ${email_body.subject} </p> 
+      <p id='body'>${email_body.body}</p> 
+      <p id='timestamp'> ${email_body.timestamp} </p>`;
 
     // Add the email body to the DOM
     document.querySelector('#emails-view').append(eb_div);
 
     // Show the emails-view
     document.querySelector('#emails-view').style.display = 'block';
-  })
+
+    // Event listeners for each button
+    document.querySelector('.reply').addEventListener('click', () => Reply(email_body));
+    document.querySelector('.unread').addEventListener('click', () => unread_email(email_body.id));
+    
+    // Archive button logic - reload the page after archiving
+    const archiveButton = document.querySelector('.archive');
+    if (archiveButton) {
+      archiveButton.addEventListener('click', () => {
+        // Archive the email
+        add_to_archives(email_body.id);
+        
+        // Reload the page
+        read_email(email_body);
+      });
+    }
+
+    // Unarchive button logic - reload the page after unarchiving
+    const unarchiveButton = document.querySelector('.unarchive');
+    if (unarchiveButton) {
+      unarchiveButton.addEventListener('click', () => {
+        // Unarchive the email
+        remove_from_archives(email_body.id);
+        
+        // Reload the page
+        read_email(email_body);
+      });
+    }
+  });
 };
+
+
+
+// Function to unread the email
+function unread_email(email_id) {
+  fetch(`/emails/${email_id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      read: false
+    })
+  })
+  .then(() => {
+    load_mailbox('inbox');
+  })
+}
 
 function send_email(event) {
   // prevent the default behavior of the form

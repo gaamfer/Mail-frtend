@@ -1,15 +1,46 @@
+@keyframes remove_mail {
+    0% {
+        opacity: 1;
+        height: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    100% {
+        opacity: 0;
+        height: 0;
+        padding: 0;
+        margin-bottom: 0;
+    }
+}
+
+.clickable {
+    cursor: pointer;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    border-radius: 2px;
+    transition: background-color 0.3s, margin-bottom 0.3s, opacity 0.3s;
+    margin-bottom: 10px;
+    animation-name: remove_mail;
+    animation-duration: 1s;
+    animation-fill-mode: forwards;
+    animation-play-state: paused;
+}
+
+.clickable:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    background-color: #000000;
+    color: #ffffff;
+}
+
 textarea {
     min-height: 400px;
 }
-#emails-view {
-    margin-top: 10px;
-}
+
 
 
 #mailsender {
     font-size: 1.5em;
     font-weight: bold;
-    padding: 10px;
 }
 #subject {
     font-style: italic;
@@ -19,21 +50,35 @@ textarea {
     font-size: x-small;
     text-align: end;
     padding: 2px;
-    color: grey;
+    color: rgb(255, 0, 0);
 }
 
-.clickable {
-    cursor: pointer;
-    padding: 10px;
-    border-bottom: 1px solid #ccc;
-    border-radius: 2px;
-    transition: background-color 0.3s;
-    margin-bottom: 4px;
-    
-}
+/* Fade out animation */
+@keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+  
+  /* Fade in animation */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  .fade-out {
+    animation: fadeOut 0.5s forwards;
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.5s forwards;
+  }
+  
 
-.clickable:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    background-color: #000000;
-    color: #ffffff;
-}
