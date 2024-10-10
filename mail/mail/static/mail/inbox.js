@@ -145,22 +145,22 @@ function Reply(email) {
 
 // Function to archive the email
 function add_to_archives(email_id) {
-  fetch(`/emails/${email_id}`, {
+  return fetch(`/emails/${email_id}`, {
     method: 'PUT',
     body: JSON.stringify({
       archived: true
     })
-  })
+  });
 }
 
 // Function to remove from the archives
 function remove_from_archives(email_id) {
-  fetch(`/emails/${email_id}`, {
+  return fetch(`/emails/${email_id}`, {
     method: 'PUT',
     body: JSON.stringify({
       archived: false
     })
-  })
+  });
 }
 
 
@@ -173,8 +173,15 @@ function read_email(email) {
     body: JSON.stringify({
       read: true
     })
-  });
+  })
+  .then(() => {
+    load_mail(email);
+  })
+}
 
+
+// Function with email details view
+function load_mail(email) {
   // Hide the emails-view
   document.querySelector('#emails-view').style.display = 'none';
 
@@ -193,6 +200,8 @@ function read_email(email) {
     const eb_div = document.createElement('div');
     eb_div.id = 'email_body';
 
+    
+    // BUTTONS ON TOP
     // Add the reply and unread buttons on top
     eb_div.innerHTML = `
       <button class="reply" data-id="${email.id}">Reply</button>
@@ -207,19 +216,27 @@ function read_email(email) {
     
     eb_div.innerHTML += `<hr>`;
 
+    // END OF BUTTONS ON TOP
+    // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    
+    // EMAIL BODY
     // Add the email data to the div
     eb_div.innerHTML  += `
-      <h4 id='mailsender'> ${email_body.sender}</h4> 
-      <p id='mail_recipients'> ${email_body.recipients}</p> 
-      <p id='subject'> ${email_body.subject} </p> 
-      <p id='body'>${email_body.body}</p> 
-      <p id='timestamp'> ${email_body.timestamp} </p>`;
+      <p><strong>FROM:</strong> ${email_body.sender}</p> 
+      <p><strong>To:</strong> ${email_body.recipients}</p> 
+      <p><strong>Subject:</strong> ${email_body.subject} </p> 
+      <p><strong>date:</strong> ${email_body.timestamp} </p>
+      <hr>
+      <pre id='body'>${email_body.body}</pre> `;
 
     // Add the email body to the DOM
     document.querySelector('#emails-view').append(eb_div);
 
     // Show the emails-view
     document.querySelector('#emails-view').style.display = 'block';
+
+    // END OF EMAIL BODY
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     // Event listeners for each button
     document.querySelector('.reply').addEventListener('click', () => Reply(email_body));
@@ -230,26 +247,25 @@ function read_email(email) {
     if (archiveButton) {
       archiveButton.addEventListener('click', () => {
         // Archive the email
-        add_to_archives(email_body.id);
-        
-        // Reload the page
-        read_email(email_body);
+        add_to_archives(email_body.id).then(() => {
+          load_mail(email);
+        });
       });
     }
 
     // Unarchive button logic - reload the page after unarchiving
     const unarchiveButton = document.querySelector('.unarchive');
-    if (unarchiveButton) {
+    if (unarchiveButton){
       unarchiveButton.addEventListener('click', () => {
         // Unarchive the email
-        remove_from_archives(email_body.id);
-        
-        // Reload the page
-        read_email(email_body);
+        remove_from_archives(email_body.id).then(() => {
+          load_mail(email);
+        });
       });
     }
+
   });
-};
+}
 
 
 
